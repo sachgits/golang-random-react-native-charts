@@ -1,12 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -32,23 +32,31 @@ func main() {
 			fmt.Println(err)
 			return
 		}
+		dataIndex := 0
 		for {
 			msgType, _, err := conn.ReadMessage()
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
-			fmt.Println("ping")
-			time.Sleep(1 * time.Second)
+			time.Sleep(10 * time.Millisecond)
 			s1 := rand.NewSource(time.Now().UnixNano())
 			r1 := rand.New(s1)
 			myNumber := r1.Intn(100)
-			var myString string = strconv.Itoa(myNumber)
-			err = conn.WriteMessage(msgType, []byte(myString))
+
+			var dataRes [2]int
+			dataRes[0] = dataIndex
+			dataRes[1] = myNumber
+
+			byteArr, _ := json.Marshal(dataRes)
+			fmt.Println(byteArr)
+
+			err = conn.WriteMessage(msgType, []byte(byteArr))
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
+			dataIndex += 1
 		}
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
